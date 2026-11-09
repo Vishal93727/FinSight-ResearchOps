@@ -1,0 +1,6 @@
+app:
+  environment: production
+  debug: false
+  log_level: WARNING
+storage:
+  backend: object

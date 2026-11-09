@@ -1,0 +1,1 @@
+Versioned FastAPI route adapters currently live in `backend/app/api/v1/`. They import core, identity, database and market-data domain logic from `src/finsight/`. New domain rules belong in `src/finsight/`; keep these modules thin and HTTP-focused.

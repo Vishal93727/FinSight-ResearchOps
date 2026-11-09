@@ -1,0 +1,52 @@
+# Secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Node / build
+node_modules/
+dist/
+build/
+
+# Data and generated artifacts
+uploads/
+data/raw/
+data/processed/
+data/private/
+artifacts/
+mlruns/
+*.parquet
+*.sqlite
+*.db
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# External Git repositories and source archives
+references/cloned/
+archives/*.zip

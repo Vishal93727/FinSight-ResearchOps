@@ -1,0 +1,46 @@
+{
+  "bollinger_mean_reversion": {
+    "annualized_return": -0.17773787,
+    "annualized_volatility": 0.11641057,
+    "average_gross_exposure": 0.3175,
+    "estimated_cost_bps": 80.0,
+    "max_drawdown": -0.330484,
+    "observations": 400.0,
+    "sharpe_ratio": -1.62213849,
+    "total_return": -0.26701397,
+    "turnover": 8.0
+  },
+  "buy_and_hold": {
+    "annualized_return": -0.01844779,
+    "annualized_volatility": 0.1894063,
+    "average_gross_exposure": 0.995,
+    "estimated_cost_bps": 10.0,
+    "max_drawdown": -0.25234643,
+    "observations": 400.0,
+    "sharpe_ratio": -0.00380948,
+    "total_return": -0.02912317,
+    "turnover": 1.0
+  },
+  "moving_average_crossover": {
+    "annualized_return": 0.07059529,
+    "annualized_volatility": 0.12318975,
+    "average_gross_exposure": 0.47,
+    "estimated_cost_bps": 170.0,
+    "max_drawdown": -0.11756537,
+    "observations": 400.0,
+    "sharpe_ratio": 0.61514836,
+    "total_return": 0.11435697,
+    "turnover": 17.0
+  },
+  "rsi_mean_reversion": {
+    "annualized_return": 0.1013105,
+    "annualized_volatility": 0.1124509,
+    "average_gross_exposure": 0.305,
+    "estimated_cost_bps": 60.0,
+    "max_drawdown": -0.14522809,
+    "observations": 400.0,
+    "sharpe_ratio": 0.91431803,
+    "total_return": 0.16553002,
+    "turnover": 6.0
+  }
+}

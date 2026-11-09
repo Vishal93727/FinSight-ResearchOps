@@ -1,0 +1,1 @@
+Celery task registration currently lives in `backend/app/workers/tasks.py` and imports canonical domain/database code from `src/finsight/`. New long-running experiment and ingestion jobs should call domain services from `src/finsight/` rather than embedding business rules in tasks.

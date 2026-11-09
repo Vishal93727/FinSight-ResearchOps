@@ -1,0 +1,31 @@
+groups:
+  - name: finsight-api
+    rules:
+      - alert: FinSightApiTargetDown
+        expr: up{job="finsight-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: FinSight API metrics target is down
+          description: Prometheus has been unable to scrape the FinSight API for two minutes.
+      - alert: FinSightHighServerErrorRate
+        expr: |
+          (sum(rate(finsight_http_requests_total{status=~"5.."}[5m])) /
+           clamp_min(sum(rate(finsight_http_requests_total[5m])), 0.001)) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: FinSight API 5xx ratio is above 5 percent
+          description: Investigate API logs and trace IDs; this alert does not imply data corruption.
+      - alert: FinSightHighP95Latency
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(finsight_http_request_duration_seconds_bucket[5m]))) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: FinSight API p95 latency exceeds two seconds
+          description: Check database query time, worker contention and dependency health.

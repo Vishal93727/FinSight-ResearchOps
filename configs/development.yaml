@@ -1,0 +1,7 @@
+app:
+  environment: development
+  debug: true
+  log_level: DEBUG
+storage:
+  backend: local
+  path: ./data

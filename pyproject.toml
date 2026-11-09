@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finsight-researchops"
+version = "0.1.0"
+description = "AI-assisted financial research and quantitative strategy operations platform"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "uvicorn[standard]>=0.30,<1.0",
+  "pydantic>=2.8,<3.0",
+  "pydantic-settings>=2.4,<3.0",
+  "SQLAlchemy>=2.0,<3.0",
+  "alembic>=1.13,<2.0",
+  "psycopg[binary]>=3.2,<4.0",
+  "PyJWT>=2.9,<3.0",
+  "celery[redis]>=5.4,<6.0",
+  "httpx>=0.27,<1.0",
+  "numpy>=1.26,<3.0",
+  "pandas>=2.2,<3.0",
+  "scikit-learn>=1.5,<2.0",
+  "pyarrow>=17,<25",
+  "python-multipart>=0.0.9,<1.0",
+  "email-validator>=2.2,<3.0",
+  "prometheus-client>=0.20,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0,<10.0",
+  "pytest-cov>=5.0,<8.0",
+  "ruff>=0.6,<1.0",
+  "mypy>=1.10,<2.0",
+]
+mlflow = [
+  "mlflow>=2.17,<4.0",
+]
+ml = [
+  "joblib>=1.4,<2.0",
+  "xgboost>=2.1,<4.0",
+  "lightgbm>=4.5,<5.0",
+  "torch>=2.4,<3.0",
+]
+pdf = [
+  "pypdf>=5.0,<7.0",
+]
+semantic = [
+  "sentence-transformers>=3.0,<6.0",
+]
+research-ai = [
+  "langgraph>=0.2,<1.0",
+  "langchain-openai>=0.2,<2.0",
+]
+rl = [
+  "gymnasium>=0.29,<2.0",
+  "stable-baselines3>=2.3,<3.0",
+]
+finbert = [
+  "transformers>=4.44,<6.0",
+  "torch>=2.4,<3.0",
+]
+observability = [
+  "opentelemetry-api>=1.26,<2.0",
+  "opentelemetry-sdk>=1.26,<2.0",
+  "opentelemetry-exporter-otlp>=1.26,<2.0",
+  "opentelemetry-instrumentation-fastapi>=0.47b0,<1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src", "backend"]
+include = ["finsight*", "app*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "backend"]
+testpaths = ["backend/tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true

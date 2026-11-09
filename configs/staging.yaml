@@ -1,0 +1,6 @@
+app:
+  environment: staging
+  debug: false
+  log_level: INFO
+storage:
+  backend: object
