@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Activity, CheckCircle2, Clock3, FlaskConical, Play, RefreshCw, ShieldAlert } from 'lucide-react';
+import { Activity, Clock3, FlaskConical, Play, RefreshCw, ShieldAlert } from 'lucide-react';
 import { apiRequest } from '../lib/api';
 
 type Snapshot = {

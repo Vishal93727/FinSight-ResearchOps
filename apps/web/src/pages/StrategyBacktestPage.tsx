@@ -55,7 +55,7 @@ function strategyName(configuration: Record<string, unknown>): string {
   } as Record<string, string>)[value] ?? value;
 }
 
-export function StrategyBacktestPage({ token }: { token: string }) {
+export function StrategyBacktestPage({ token, roles }: { token: string; roles: string[] }) {
   const [results, setResults] = useState<StrategyResult[]>([]);
   const [symbolFilter, setSymbolFilter] = useState('ALL');
   const [strategyFilter, setStrategyFilter] = useState('ALL');
@@ -110,7 +110,7 @@ export function StrategyBacktestPage({ token }: { token: string }) {
   }
 
   return <>
-    <RLEvaluationPanel token={token} />
+    <RLEvaluationPanel token={token} roles={roles} />
     <div className="page-heading">
       <div><p className="eyebrow">PHASE 2 · STRATEGY EVALUATION</p><h2>Strategy & backtest lab</h2>
         <p className="muted">Inspect completed historical simulations across baseline strategies, datasets and pinned benchmarks.</p></div>

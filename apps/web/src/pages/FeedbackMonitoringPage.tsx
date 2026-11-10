@@ -3,7 +3,7 @@ import { Activity, AlertTriangle, ArrowUpRight, BrainCircuit, RefreshCw, Target 
 import { apiRequest } from '../lib/api';
 
 type Summary = {
-  outcome_metrics: { sample_count: number; mae: number | null; rmse: number | null; mean_bias: number | null; directional_accuracy: number | null };
+  outcome_metrics: { sample_count: number; mae: number | null; rmse: number | null; mean_bias: number | null; directional_accuracy: number | null; directional_sample_count: number };
   outcome_count: number;
   latest_outcomes: { id: string; symbol: string; forecast_date: string; realised_date: string; predicted: number; realised: number; error: number; benchmark: number | null }[];
   strategy_snapshots: { id: string; strategy_key: string; period_start: string; period_end: string; metrics: Record<string, number | string | null> }[];
