@@ -1,7 +1,7 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, inspect, pool, text
 
 from finsight.core.config import get_settings
 from finsight.infrastructure.database.base import Base
@@ -33,7 +33,30 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+        if connection.dialect.name == "postgresql":
+            version_table = inspect(connection)
+            if not version_table.has_table("alembic_version"):
+                connection.execute(text(
+                    "CREATE TABLE alembic_version (version_num VARCHAR(64) NOT NULL, "
+                    "CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))"
+                ))
+                connection.commit()
+            else:
+                version_column = next(
+                    column for column in version_table.get_columns("alembic_version")
+                    if column["name"] == "version_num"
+                )
+                version_length = getattr(version_column["type"], "length", None)
+                if version_length is not None and version_length < 64:
+                    connection.execute(text(
+                        "ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64)"
+                    ))
+                    connection.commit()
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+        )
         with context.begin_transaction():
             context.run_migrations()
 
