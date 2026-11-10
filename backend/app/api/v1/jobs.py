@@ -96,7 +96,8 @@ def retry_queued_job(job_id: str, request: Request, db: Session = Depends(get_db
     job.status = "QUEUED"
     job.error_message = None
     job.completed_at = None
-    db.commit(); db.refresh(job)
+    db.commit()
+    db.refresh(job)
     try:
         dispatcher(job.id)
     except Exception as exc:
@@ -108,7 +109,8 @@ def retry_queued_job(job_id: str, request: Request, db: Session = Depends(get_db
     record_audit(db, actor=user, action="jobs.queue_retry", resource_type="job",
         resource_id=job.id, request_id=getattr(request.state, "request_id", None),
         details={"task_name": job.task_name})
-    db.commit(); db.refresh(job)
+    db.commit()
+    db.refresh(job)
     return job
 
 

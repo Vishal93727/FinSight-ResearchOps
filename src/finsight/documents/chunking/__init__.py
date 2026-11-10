@@ -25,7 +25,8 @@ def chunk_text(text: str, chunk_size: int = 420, overlap: int = 60) -> list[Text
     for paragraph in paragraphs:
         is_heading = len(paragraph) <= 120 and (paragraph.startswith("#") or paragraph.isupper())
         if is_heading and current:
-            sections.append((current_heading, current)); current = []
+            sections.append((current_heading, current))
+            current = []
         if is_heading:
             current_heading = paragraph.lstrip("# ").strip()
         else:

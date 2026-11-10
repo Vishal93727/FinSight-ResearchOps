@@ -30,7 +30,8 @@ def create_research_hypothesis(payload: HypothesisCreate, request: Request,
     record_audit(db, actor=user, action="research.hypothesis_created", resource_type="research_hypothesis",
                  resource_id=hypothesis.id, request_id=getattr(request.state, "request_id", None),
                  details={"symbol": hypothesis.symbol, "evidence_count": len(hypothesis.evidence)})
-    db.commit(); db.refresh(hypothesis)
+    db.commit()
+    db.refresh(hypothesis)
     return hypothesis
 
 
@@ -55,7 +56,8 @@ def submit_research_hypothesis_for_review(hypothesis_id: str, request: Request,
     record_audit(db, actor=user, action="research.hypothesis_submitted_for_review", resource_type="research_hypothesis",
         resource_id=hypothesis.id, request_id=getattr(request.state, "request_id", None),
         details={"version": hypothesis.version})
-    db.commit(); db.refresh(hypothesis)
+    db.commit()
+    db.refresh(hypothesis)
     return hypothesis
 
 
@@ -71,7 +73,8 @@ def decide_research_hypothesis(hypothesis_id: str, payload: HypothesisDecision, 
     record_audit(db, actor=user, action="research.hypothesis_decided", resource_type="research_hypothesis",
                  resource_id=hypothesis.id, request_id=getattr(request.state, "request_id", None),
                  details={"decision": payload.decision, "version": hypothesis.version})
-    db.commit(); db.refresh(hypothesis)
+    db.commit()
+    db.refresh(hypothesis)
     return hypothesis
 
 
@@ -88,11 +91,13 @@ def create_feature_set(payload: FeatureSetCreate, request: Request, db: Session 
     feature_set = FeatureSetVersion(feature_key=payload.feature_key, version=version,
         description=payload.description, definition=payload.definition, source_snapshot_id=snapshot.id,
         definition_sha256=digest, created_by=user.id)
-    db.add(feature_set); db.flush()
+    db.add(feature_set)
+    db.flush()
     record_audit(db, actor=user, action="features.version_created", resource_type="feature_set_version",
         resource_id=feature_set.id, request_id=getattr(request.state, "request_id", None),
         details={"feature_key": feature_set.feature_key, "version": version, "definition_sha256": digest})
-    db.commit(); db.refresh(feature_set)
+    db.commit()
+    db.refresh(feature_set)
     return feature_set
 
 
@@ -139,12 +144,14 @@ def create_experiment(payload: ExperimentCreate, request: Request, db: Session =
         feature_set_version_id=feature_set.id,
         benchmark_snapshot_id=benchmark_snapshot.id if benchmark_snapshot else None,
         configuration=configuration, configuration_sha256=digest, status="DRAFT", created_by=user.id)
-    db.add(experiment); db.flush()
+    db.add(experiment)
+    db.flush()
     record_audit(db, actor=user, action="experiments.specification_created", resource_type="experiment",
         resource_id=experiment.id, request_id=getattr(request.state, "request_id", None),
         details={"configuration_sha256": digest, "dataset_snapshot_id": snapshot.id,
                  "benchmark_snapshot_id": benchmark_snapshot.id if benchmark_snapshot else None})
-    db.commit(); db.refresh(experiment)
+    db.commit()
+    db.refresh(experiment)
     return experiment
 
 
@@ -214,7 +221,8 @@ def submit_experiment_run(experiment_id: str, payload: ExperimentRunCreate, requ
         resource_id=run.id, request_id=getattr(request.state, "request_id", None),
         details={"experiment_id": experiment_id, "run_number": run.run_number,
                   "idempotency_key_present": idempotency_key is not None})
-    db.commit(); db.refresh(run)
+    db.commit()
+    db.refresh(run)
     try:
         enqueue_experiment_run(run.id)
     except Exception as exc:

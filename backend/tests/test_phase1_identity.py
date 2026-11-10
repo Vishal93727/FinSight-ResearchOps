@@ -1,7 +1,6 @@
 """Phase-one identity and RBAC acceptance tests."""
 
 from app.core.security import hash_password, verify_password
-from app.models.entities import Role, User
 
 
 def test_password_hash_is_salted_and_verifies() -> None:
@@ -39,10 +38,11 @@ def test_duplicate_registration_is_rejected(client) -> None:
 
 
 def test_analyst_cannot_create_instrument(client) -> None:
-    register = client.post(
+    registration = client.post(
         "/api/v1/auth/register",
         json={"email": "analyst@example.com", "full_name": "Analyst", "password": "A-strong-password-2026"},
     )
+    assert registration.status_code == 201
     token = client.post(
         "/api/v1/auth/login", data={"username": "analyst@example.com", "password": "A-strong-password-2026"}
     ).json()["access_token"]

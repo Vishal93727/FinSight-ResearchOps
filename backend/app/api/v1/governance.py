@@ -1,5 +1,4 @@
 """Model registry, deterministic model risk review and independent human approvals."""
-from datetime import UTC, datetime
 from pathlib import Path
 import hashlib
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -143,7 +142,8 @@ def decide_model_version(model_version_id: str, payload: GovernanceDecisionCreat
     record_audit(db, actor=user, action=f"governance.model_{payload.decision.lower()}",
         resource_type="model_version", resource_id=version.id,
         request_id=getattr(request.state, "request_id", None), details={"comment": payload.comment.strip()})
-    db.commit(); db.refresh(version)
+    db.commit()
+    db.refresh(version)
     return version
 
 
@@ -163,7 +163,8 @@ def promote_model_version(model_version_id: str, request: Request, db: Session =
     record_audit(db, actor=user, action="governance.model_promoted", resource_type="model_version",
         resource_id=version.id, request_id=getattr(request.state, "request_id", None),
         details={"model_key": version.model_key, "version": version.version})
-    db.commit(); db.refresh(version)
+    db.commit()
+    db.refresh(version)
     return version
 
 
@@ -185,5 +186,6 @@ def rollback_model_version(model_version_id: str, request: Request, db: Session 
     record_audit(db, actor=user, action="governance.model_rollback", resource_type="model_version",
         resource_id=version.id, request_id=getattr(request.state, "request_id", None),
         details={"model_key": version.model_key, "version": version.version})
-    db.commit(); db.refresh(version)
+    db.commit()
+    db.refresh(version)
     return version

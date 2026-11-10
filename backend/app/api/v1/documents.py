@@ -47,7 +47,8 @@ async def upload_research_document(
     record_audit(db, actor=user, action="documents.ingested", resource_type="research_document",
         resource_id=doc.id, request_id=getattr(request.state, "request_id", None),
         details={"sha256": doc.content_sha256, "chunk_count": doc.chunk_count, "filename": filename})
-    db.commit(); db.refresh(doc)
+    db.commit()
+    db.refresh(doc)
     return doc
 
 
@@ -93,11 +94,13 @@ async def queue_research_document_upload(
             "title": title, "source_uri": source_uri, "staged_path": str(staged_path),
             "content_sha256": digest, "byte_count": len(raw)},
         idempotency_key=idempotency_key, created_by=user.id)
-    db.add(job); db.flush()
+    db.add(job)
+    db.flush()
     record_audit(db, actor=user, action="documents.ingestion_queued", resource_type="job",
         resource_id=job.id, request_id=getattr(request.state, "request_id", None),
         details={"sha256": digest, "filename": filename})
-    db.commit(); db.refresh(job)
+    db.commit()
+    db.refresh(job)
     try:
         enqueue_document_ingestion(job.id)
     except Exception as exc:

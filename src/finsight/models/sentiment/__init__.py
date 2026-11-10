@@ -1,6 +1,8 @@
 """Transparent lexicon financial sentiment baseline (not a pretrained language model)."""
 from __future__ import annotations
+from functools import lru_cache
 import re
+from typing import Any
 
 POSITIVE = {"beat", "beats", "growth", "grew", "profit", "profitable", "strong", "upgrade",
             "upgraded", "bullish", "outperform", "record", "surge", "positive", "improve", "improved"}
@@ -15,21 +17,21 @@ def score_financial_sentiment(text: str) -> dict:
     for index, token in enumerate(tokens):
         negated = any(word in NEGATIONS for word in tokens[max(0, index - 3):index])
         if token in POSITIVE:
-            if negated: negative += 1
-            else: positive += 1
+            if negated:
+                negative += 1
+            else:
+                positive += 1
         elif token in NEGATIVE:
-            if negated: positive += 1
-            else: negative += 1
+            if negated:
+                positive += 1
+            else:
+                negative += 1
     total = positive + negative
     score = (positive - negative) / total if total else 0.0
     label = "POSITIVE" if score > 0.15 else "NEGATIVE" if score < -0.15 else "NEUTRAL"
     return {"label": label, "score": round(score, 6), "positive_terms": positive,
             "negative_terms": negative, "token_count": len(tokens),
             "method": "transparent_lexicon_v1", "pretrained_model": False}
-
-
-from functools import lru_cache
-from typing import Any
 
 
 @lru_cache(maxsize=2)

@@ -36,10 +36,12 @@ def queue_rl_evaluation(payload: RLEvaluationJobCreate, request: Request,
         return existing
     job = JobRecord(task_name="rl.evaluate", status="QUEUED", payload=values,
         idempotency_key=payload.idempotency_key, created_by=user.id)
-    db.add(job); db.flush()
+    db.add(job)
+    db.flush()
     record_audit(db, actor=user, action="rl.evaluation_queued", resource_type="job", resource_id=job.id,
         request_id=getattr(request.state, "request_id", None), details={"algorithm": payload.algorithm})
-    db.commit(); db.refresh(job)
+    db.commit()
+    db.refresh(job)
     try:
         enqueue_rl_evaluation(job.id)
     except Exception as exc:

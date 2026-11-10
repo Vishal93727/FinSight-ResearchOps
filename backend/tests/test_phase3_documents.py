@@ -271,7 +271,6 @@ def test_cross_encoder_reranker_changes_rank_and_persists_score() -> None:
 def test_async_document_ingestion_job_is_staged_idempotent_and_processed(client, db_session, tmp_path, monkeypatch) -> None:
     from types import SimpleNamespace
     from pathlib import Path
-    from sqlalchemy import select
     from app.api.v1 import documents as documents_api
     from finsight.infrastructure.database.models import JobRecord
     import app.services.document_jobs as document_jobs

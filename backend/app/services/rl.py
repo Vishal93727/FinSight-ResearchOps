@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 import pandas as pd
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from finsight.core.config import get_settings
 from finsight.governance.models import RLPolicyEvaluation

@@ -31,7 +31,8 @@ router = APIRouter(prefix="/ml", tags=["advanced ML"])
 def _hash_file(path: str) -> str:
     digest = hashlib.sha256()
     with Path(path).open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""): digest.update(block)
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
     return digest.hexdigest()
 
 
@@ -57,7 +58,8 @@ def create_model_evaluation(payload: ModelEvaluationCreate, request: Request,
         if len(raw_frame) > get_settings().max_ml_evaluation_rows:
             raise HTTPException(status_code=413, detail="Snapshot exceeds the configured ML evaluation row limit")
         frame = build_declared_feature_frame(raw_frame, feature_set.definition)
-    except HTTPException: raise
+    except HTTPException:
+        raise
     except (ValueError, KeyError) as exc:
         raise HTTPException(status_code=422, detail=f"Feature engineering failed: {exc}") from exc
     except Exception as exc:
@@ -102,12 +104,14 @@ def create_model_evaluation(payload: ModelEvaluationCreate, request: Request,
         feature_set_version_id=feature_set.id, feature_columns=feature_columns, configuration=configuration,
         configuration_sha256=fingerprint, metrics=evaluation.metrics,
         artifact_path=str(artifact_path.relative_to(Path(settings.data_storage_path).resolve())), status="SUCCEEDED", created_by=user.id)
-    db.add(record); db.flush()
+    db.add(record)
+    db.flush()
     record_audit(db, actor=user, action="ml.supervised_evaluation_completed", resource_type="model_evaluation",
         resource_id=record.id, request_id=getattr(request.state, "request_id", None),
         details={"model_family": payload.model_family, "configuration_sha256": fingerprint,
                  "dataset_snapshot_id": snapshot.id})
-    db.commit(); db.refresh(record)
+    db.commit()
+    db.refresh(record)
     return record
 
 
@@ -124,13 +128,15 @@ def queue_model_evaluation(payload: ModelEvaluationJobCreate, request: Request,
             return existing
     job = JobRecord(task_name="ml.evaluate", status="QUEUED", payload=values,
         idempotency_key=payload.idempotency_key, created_by=user.id)
-    db.add(job); db.flush()
+    db.add(job)
+    db.flush()
     record_audit(db, actor=user, action="ml.evaluation_queued", resource_type="job",
         resource_id=job.id, request_id=getattr(request.state, "request_id", None),
         details={"dataset_snapshot_id": payload.dataset_snapshot_id,
                  "feature_set_version_id": payload.feature_set_version_id,
                  "model_family": payload.model_family})
-    db.commit(); db.refresh(job)
+    db.commit()
+    db.refresh(job)
     try:
         enqueue_model_evaluation(job.id)
     except Exception as exc:

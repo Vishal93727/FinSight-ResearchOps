@@ -1,6 +1,6 @@
 """Immutable, content-addressed feature-set definitions."""
 from datetime import UTC, datetime
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from finsight.infrastructure.database.base import Base
 from finsight.infrastructure.database.mixins import new_id

@@ -1,5 +1,4 @@
 """Phase 5 acceptance: realised outcomes, drift, suggestions and operations APIs."""
-from datetime import date, timedelta, datetime, UTC
 from sqlalchemy import select
 from app.models.entities import Role, User
 from finsight.feedback.models import PredictionOutcome, DriftAssessment, StrategyPerformanceSnapshot
@@ -25,7 +24,7 @@ def _add_role(db_session, email: str, role_key: str) -> None:
 
 
 def _token_for_role(client, db_session, email: str, role: str) -> str:
-    token = _register(client, email)
+    _register(client, email)
     _add_role(db_session, email, role)
     return client.post("/api/v1/auth/login", data={"username": email, "password": "Strong-password-2026!"}).json()["access_token"]
 
@@ -143,7 +142,9 @@ def test_stale_job_recovery_is_dry_run_by_default_and_requires_admin_confirmatio
     old = datetime.now(UTC) - timedelta(hours=2)
     job = JobRecord(task_name="system.ping", status="QUEUE_FAILED", payload={}, created_at=old,
                     error_message="Temporary broker outage", created_by=db_session.scalar(select(User).where(User.email == admin_email)).id)
-    db_session.add(job); db_session.commit(); db_session.refresh(job)
+    db_session.add(job)
+    db_session.commit()
+    db_session.refresh(job)
     headers = {"Authorization": f"Bearer {token}"}
     preview = client.post("/api/v1/operations/recover-stale-jobs", headers=headers, json={"stale_after_minutes": 30})
     assert preview.status_code == 200, preview.text
@@ -182,7 +183,8 @@ def test_research_to_outcome_lineage_is_owned_and_snapshot_consistent(client, db
         file_path="/test/msft.parquet", storage_format="parquet", sha256="a" * 64,
         row_count=200, manifest={"source": "test"}, created_by=owner.id,
     )
-    db_session.add(snapshot); db_session.flush()
+    db_session.add(snapshot)
+    db_session.flush()
     feature_set = FeatureSetVersion(
         feature_key="msft-core", version=1, description="Test feature lineage",
         definition={"columns": ["close", "returns_1d"]}, source_snapshot_id=snapshot.id,
@@ -193,14 +195,16 @@ def test_research_to_outcome_lineage_is_owned_and_snapshot_consistent(client, db
         rationale="Acceptance test", status="APPROVED", evidence=[], decision_note="Approved for test",
         version=1, owner_user_id=owner.id,
     )
-    db_session.add_all([feature_set, hypothesis]); db_session.flush()
+    db_session.add_all([feature_set, hypothesis])
+    db_session.flush()
     experiment = Experiment(
         name="MSFT walk-forward test", hypothesis_id=hypothesis.id, instrument_symbol="MSFT",
         dataset_snapshot_id=snapshot.id, feature_set_version_id=feature_set.id,
         configuration={"evaluation": "walk_forward"}, configuration_sha256="c" * 64,
         status="COMPLETED", created_by=owner.id,
     )
-    db_session.add(experiment); db_session.flush()
+    db_session.add(experiment)
+    db_session.flush()
     run = ExperimentRun(
         experiment_id=experiment.id, run_number=1, status="SUCCEEDED", random_seed=42,
         metrics={"rmse": 0.012}, artifacts={"equity_curve": "test://equity"},
@@ -215,7 +219,8 @@ def test_research_to_outcome_lineage_is_owned_and_snapshot_consistent(client, db
         name="Lineage acceptance account", currency="USD", initial_cash=Decimal("100000"),
         cash_balance=Decimal("100000"), created_by=owner.id,
     )
-    db_session.add_all([run, model, account]); db_session.commit()
+    db_session.add_all([run, model, account])
+    db_session.commit()
 
     body = {
         "instrument_symbol": "MSFT", "forecast_date": "2026-10-01", "realised_date": "2026-10-30",
@@ -262,14 +267,16 @@ def test_research_to_outcome_lineage_is_owned_and_snapshot_consistent(client, db
         definition={"columns": ["close"]}, source_snapshot_id=snapshot.id,
         definition_sha256="d" * 64, created_by=owner.id,
     )
-    db_session.add(mismatched_features); db_session.flush()
+    db_session.add(mismatched_features)
+    db_session.flush()
     mismatched_model = ModelVersion(
         model_key="msft-momentum-wrong-lineage", version="1.0.0", model_family="XGBOOST",
         dataset_snapshot_id=snapshot.id, feature_set_version_id=mismatched_features.id,
         metrics={"rmse": 0.012}, configuration={"seed": 42}, risk_decision="PASS",
         state="ACTIVE", created_by=owner.id,
     )
-    db_session.add(mismatched_model); db_session.commit()
+    db_session.add(mismatched_model)
+    db_session.commit()
     conflict = client.post("/api/v1/feedback/outcomes",
         headers={"Authorization": f"Bearer {token}"},
         json=body | {"model_version_id": mismatched_model.id,
@@ -294,7 +301,8 @@ def test_research_to_outcome_lineage_is_owned_and_snapshot_consistent(client, db
         file_path="/test/msft-current.parquet", storage_format="parquet", sha256="e" * 64,
         row_count=22, manifest={"role": "current-drift-window"}, created_by=owner.id,
     )
-    db_session.add(current_snapshot); db_session.commit()
+    db_session.add(current_snapshot)
+    db_session.commit()
     baseline = [0.01, 0.02, 0.00, -0.01, 0.015, 0.006, -0.004, 0.008, 0.011, -0.003, 0.005, 0.009]
     shifted = [0.10, 0.12, 0.08, 0.13, 0.09, 0.11, 0.14, 0.07, 0.12, 0.10, 0.08, 0.13]
     drift = client.post("/api/v1/feedback/drift/check",
@@ -347,20 +355,23 @@ def test_drift_check_cannot_reference_another_users_model_or_snapshot(client, db
         file_path="/test/phase5-msft.parquet", storage_format="parquet", sha256="e" * 64,
         row_count=200, manifest={}, created_by=owner.id,
     )
-    db_session.add(snapshot); db_session.flush()
+    db_session.add(snapshot)
+    db_session.flush()
     features = FeatureSetVersion(
         feature_key="phase5-drift-features", version=1, description="Drift reference features",
         definition={"columns": ["close"]}, source_snapshot_id=snapshot.id,
         definition_sha256="f" * 64, created_by=owner.id,
     )
-    db_session.add(features); db_session.flush()
+    db_session.add(features)
+    db_session.flush()
     model = ModelVersion(
         model_key="phase5-drift-model", version="1.0.0", model_family="RIDGE",
         dataset_snapshot_id=snapshot.id, feature_set_version_id=features.id,
         metrics={"rmse": 0.01}, configuration={}, risk_decision="PASS",
         state="ACTIVE", created_by=owner.id,
     )
-    db_session.add(model); db_session.commit()
+    db_session.add(model)
+    db_session.commit()
 
     other_email = "phase5.drift.other@example.com"
     other_token = _token_for_role(client, db_session, other_email, "QUANT_RESEARCHER")
@@ -428,7 +439,8 @@ def test_completed_backtest_run_can_feed_strategy_monitoring_with_hash_verificat
         file_path="/not-read/by-this-test.parquet", storage_format="parquet", sha256="a" * 64,
         row_count=200, manifest={}, created_by=owner.id,
     )
-    db_session.add(snapshot); db_session.flush()
+    db_session.add(snapshot)
+    db_session.flush()
     features = FeatureSetVersion(
         feature_key="monitor-features", version=1, description="Monitoring feature lineage",
         definition={"columns": ["close"]}, source_snapshot_id=snapshot.id,
@@ -439,14 +451,16 @@ def test_completed_backtest_run_can_feed_strategy_monitoring_with_hash_verificat
         rationale="End-to-end acceptance", status="APPROVED", evidence=[],
         decision_note="Test approved", version=1, owner_user_id=owner.id,
     )
-    db_session.add_all([features, hypothesis]); db_session.flush()
+    db_session.add_all([features, hypothesis])
+    db_session.flush()
     experiment = Experiment(
         name="Monitor end-to-end", hypothesis_id=hypothesis.id, instrument_symbol="MSFT",
         dataset_snapshot_id=snapshot.id, feature_set_version_id=features.id,
         configuration={"baseline": "moving_average_crossover"}, configuration_sha256="c" * 64,
         status="COMPLETED", created_by=owner.id,
     )
-    db_session.add(experiment); db_session.flush()
+    db_session.add(experiment)
+    db_session.flush()
     artifact = tmp_path / "equity_curve.parquet"
     artifact.write_bytes(b"test parquet bytes; pandas reader is stubbed")
     digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
@@ -455,7 +469,8 @@ def test_completed_backtest_run_can_feed_strategy_monitoring_with_hash_verificat
         metrics={"total_return": 0.04},
         artifacts={"equity_curve_path": str(artifact), "equity_curve_sha256": digest},
     )
-    db_session.add(run); db_session.commit()
+    db_session.add(run)
+    db_session.commit()
 
     from types import SimpleNamespace
     monkeypatch.setattr("app.api.v1.feedback.get_settings", lambda: SimpleNamespace(data_storage_path=str(tmp_path)))

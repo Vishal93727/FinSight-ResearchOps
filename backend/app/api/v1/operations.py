@@ -120,13 +120,18 @@ def recover_stale_jobs(payload: StaleJobRecoveryRequest, request: Request,
         if dispatch is None:
             results.append({"job_id": job.id, "status": "UNSUPPORTED_TASK", "task_name": job.task_name})
             continue
-        job.status = "QUEUED"; job.started_at = None; job.completed_at = None; job.error_message = None
+        job.status = "QUEUED"
+        job.started_at = None
+        job.completed_at = None
+        job.error_message = None
         db.commit()
         try:
             dispatch(job.id)
             results.append({"job_id": job.id, "status": "REQUEUED"})
         except Exception as exc:
-            job.status = "QUEUE_FAILED"; job.error_message = type(exc).__name_; job.completed_at = datetime.now(UTC)
+            job.status = "QUEUE_FAILED"
+            job.error_message = type(exc).__name_
+            job.completed_at = datetime.now(UTC)
             db.commit()
             results.append({"job_id": job.id, "status": "QUEUE_FAILED"})
     record_audit(db, actor=user, action="operations.stale_jobs_recovered", resource_type="job_recovery_batch",

@@ -1,5 +1,4 @@
 """Paper-only portfolio account, order, fill, reconciliation and kill-switch APIs."""
-from datetime import UTC, datetime
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
@@ -43,7 +42,8 @@ def create_paper_account(payload: PaperAccountCreate, request: Request, db: Sess
     db.add(account)
     record_audit(db, actor=user, action="paper.account_created", resource_type="paper_account",
         request_id=getattr(request.state, "request_id", None), details={"name": account.name, "currency": account.currency})
-    db.commit(); db.refresh(account)
+    db.commit()
+    db.refresh(account)
     return account
 
 
@@ -109,7 +109,8 @@ def submit_paper_order(account_id: str, payload: PaperOrderCreate, request: Requ
             request_id=getattr(request.state, "request_id", None),
             details={"account_id": account.id, "symbol": order.symbol, "side": order.side,
                      "quantity": str(order.quantity), "risk_check": order.risk_check})
-        db.commit(); db.refresh(order)
+        db.commit()
+        db.refresh(order)
         return order
     except IntegrityError as exc:
         db.rollback()
@@ -278,4 +279,4 @@ def paper_account_audit(account_id: str, db: Session = Depends(get_db),
             "cash_delta": str(x.cash_delta), "quantity_delta": str(x.quantity_delta),
             "execution_price": str(x.execution_price), "created_at": x.created_at} for x in ledger],
         "audit_events": [{"id": e.id, "action": e.action, "actor_user_id": e.actor_user_id,
-            "details": e.details, "created_at": e.created_at} for e in events]}
+            "details": e.details, "created_at": e.created_at} for e in combined_events]}

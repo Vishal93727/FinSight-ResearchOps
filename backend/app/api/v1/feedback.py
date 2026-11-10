@@ -4,11 +4,10 @@ import hashlib
 import json
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from finsight.core.security import require_roles
-from finsight.documents.models import ModelEvaluation
 from finsight.experiments.models import Experiment, ExperimentRun
 from finsight.execution.models import PaperAccount
 from finsight.feedback.models import PredictionOutcome, StrategyPerformanceSnapshot, DriftAssessment, ResearchSuggestion
@@ -95,7 +94,8 @@ def create_outcome(payload: OutcomeCreate, request: Request, db: Session = Depen
             resource_id=row.id, request_id=getattr(request.state, "request_id", None),
             details={"symbol": row.instrument_symbol, "model_version_id": row.model_version_id,
                      "experiment_run_id": row.experiment_run_id, "paper_account_id": row.paper_account_id})
-        db.commit(); db.refresh(row)
+        db.commit()
+        db.refresh(row)
         return row
     except IntegrityError as exc:
         db.rollback()
@@ -155,11 +155,13 @@ def evaluate_strategy(payload: StrategyPerformanceCreate, request: Request,
     row = StrategyPerformanceSnapshot(strategy_key=payload.strategy_key,
         period_start=payload.period_start, period_end=payload.period_end, metrics=metrics,
         source_reference=payload.source_reference, created_by=user.id)
-    db.add(row); db.flush()
+    db.add(row)
+    db.flush()
     record_audit(db, actor=user, action="feedback.strategy_performance_evaluated",
         resource_type="strategy_performance_snapshot", resource_id=row.id,
         request_id=getattr(request.state, "request_id", None), details={"strategy_key": row.strategy_key})
-    db.commit(); db.refresh(row)
+    db.commit()
+    db.refresh(row)
     return {"id": row.id, "strategy_key": row.strategy_key, "period_start": row.period_start,
         "period_end": row.period_end, "metrics": row.metrics, "created_at": row.created_at}
 
@@ -237,12 +239,14 @@ def evaluate_completed_run(payload: StrategyRunEvaluationCreate, request: Reques
         source_reference=source_reference,
         created_by=user.id,
     )
-    db.add(row); db.flush()
+    db.add(row)
+    db.flush()
     record_audit(db, actor=user, action="feedback.strategy_run_evaluated",
         resource_type="strategy_performance_snapshot", resource_id=row.id,
         request_id=getattr(request.state, "request_id", None),
         details={"experiment_run_id": run.id, "strategy_key": strategy_key})
-    db.commit(); db.refresh(row)
+    db.commit()
+    db.refresh(row)
     return {"id": row.id, "strategy_key": row.strategy_key, "period_start": row.period_start,
         "period_end": row.period_end, "metrics": row.metrics, "source_reference": row.source_reference,
         "created_at": row.created_at}
@@ -298,11 +302,13 @@ def check_drift(payload: DriftCheckCreate, request: Request, db: Session = Depen
         reference_snapshot_id=payload.reference_snapshot_id, current_snapshot_id=payload.current_snapshot_id,
         overall_status=result["overall_status"], feature_results=result["features"],
         summary=result["summary"], created_by=user.id)
-    db.add(row); db.flush()
+    db.add(row)
+    db.flush()
     record_audit(db, actor=user, action="feedback.drift_assessed", resource_type="drift_assessment",
         resource_id=row.id, request_id=getattr(request.state, "request_id", None),
         details={"status": row.overall_status, "summary": row.summary})
-    db.commit(); db.refresh(row)
+    db.commit()
+    db.refresh(row)
     return {"id": row.id, "overall_status": row.overall_status, "feature_results": row.feature_results,
         "summary": row.summary, "created_at": row.created_at}
 
@@ -357,9 +363,12 @@ def generate_suggestions(request: Request, db: Session = Depends(get_db),
         existing = db.scalar(select(ResearchSuggestion).where(
             ResearchSuggestion.created_by == user.id, ResearchSuggestion.dedupe_key == key))
         if existing:
-            created.append(existing); continue
+            created.append(existing)
+            continue
         row = ResearchSuggestion(**proposal, status="PROPOSED", dedupe_key=key, created_by=user.id)
-        db.add(row); db.flush(); created.append(row)
+        db.add(row)
+        db.flush()
+        created.append(row)
     record_audit(db, actor=user, action="feedback.research_suggestions_generated",
         resource_type="research_suggestion_batch", request_id=getattr(request.state, "request_id", None),
         details={"count": len(created)})
@@ -386,10 +395,13 @@ def decide_suggestion(suggestion_id: str, payload: SuggestionDecision, request: 
         raise HTTPException(status_code=404, detail="Research suggestion not found")
     if row.status != "PROPOSED":
         raise HTTPException(status_code=409, detail="Only proposed suggestions can be decided")
-    row.status = payload.status; row.decision_comment = payload.comment.strip()
-    row.decided_by = user.id; row.decided_at = datetime.now(UTC)
+    row.status = payload.status
+    row.decision_comment = payload.comment.strip()
+    row.decided_by = user.id
+    row.decided_at = datetime.now(UTC)
     record_audit(db, actor=user, action=f"feedback.suggestion_{payload.status.lower()}",
         resource_type="research_suggestion", resource_id=row.id,
         request_id=getattr(request.state, "request_id", None), details={"comment": row.decision_comment})
-    db.commit(); db.refresh(row)
+    db.commit()
+    db.refresh(row)
     return row

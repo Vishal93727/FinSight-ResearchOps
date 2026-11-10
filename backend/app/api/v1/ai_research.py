@@ -191,7 +191,8 @@ def ask_research_question(payload: ResearchAskRequest, request: Request,
         resource_id=report.id, request_id=getattr(request.state, "request_id", None),
         details={"evidence_count": len(evidence), "evidence_verified": workflow["evidence_verified"],
                  "claim_check_passed": bool(workflow.get("claim_checks", {}).get("passed"))})
-    db.commit(); db.refresh(report)
+    db.commit()
+    db.refresh(report)
     return report
 
 
@@ -335,7 +336,8 @@ def list_research_reports(db: Session = Depends(get_db), user: User = Depends(ge
 @router.get("/reports/{report_id}", response_model=ResearchReportResponse)
 def get_research_report(report_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     report = db.get(ResearchReport, report_id)
-    if report is None: raise HTTPException(status_code=404, detail="Research report not found")
+    if report is None:
+        raise HTTPException(status_code=404, detail="Research report not found")
     return report
 
 
@@ -356,18 +358,21 @@ def list_research_workflow_checkpoints(report_id: str, db: Session = Depends(get
 def decide_research_report(report_id: str, payload: ResearchReportDecision, request: Request,
     db: Session = Depends(get_db), user: User = Depends(require_roles("ADMIN", "RISK_REVIEWER"))):
     report = db.get(ResearchReport, report_id)
-    if report is None: raise HTTPException(status_code=404, detail="Research report not found")
+    if report is None:
+        raise HTTPException(status_code=404, detail="Research report not found")
     if report.status != "AWAITING_REVIEW" or not report.evidence_verified:
         raise HTTPException(status_code=409, detail="Only citation-verified reports awaiting review can be decided")
     if report.created_by == user.id and "ADMIN" not in {role.key for role in user.roles}:
         raise HTTPException(status_code=403, detail="The report author cannot approve their own report")
     report.status = "APPROVED" if payload.decision == "APPROVE" else "REJECTED"
-    report.reviewer_user_id = user.id; report.review_comment = payload.comment
+    report.reviewer_user_id = user.id
+    report.review_comment = payload.comment
     report.reviewed_at = datetime.now(UTC)
     report.workflow_trace = list(report.workflow_trace) + [{"node": "human_review", "status": report.status,
         "reviewer_user_id": user.id, "reviewed_at": report.reviewed_at.isoformat()}]
     record_audit(db, actor=user, action=f"research.report_{'approved' if payload.decision == 'APPROVE' else 'rejected'}",
         resource_type="research_report", resource_id=report.id,
         request_id=getattr(request.state, "request_id", None), details={"decision": payload.decision})
-    db.commit(); db.refresh(report)
+    db.commit()
+    db.refresh(report)
     return report

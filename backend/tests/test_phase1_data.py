@@ -1,7 +1,6 @@
 """Financial ingestion route tests without relying on live external providers."""
 
 from app.models.entities import Instrument
-from app.core.security import hash_password
 
 
 def analyst_token(client) -> str:

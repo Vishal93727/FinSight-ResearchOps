@@ -100,13 +100,15 @@ def test_ml_api_pins_feature_set_and_snapshot_and_persists_model_artifact(client
         start_date=date(2022, 1, 3), end_date=date(2022, 9, 9), status="READY",
         file_path=str(raw_path), storage_format="parquet", sha256=digest, row_count=180,
         manifest={}, created_by=user.id)
-    db_session.add(snapshot); db_session.flush()
+    db_session.add(snapshot)
+    db_session.flush()
     definition = {"features": ["return_1d", "momentum_5d"], "target": "next_day_return"}
     feature_set = FeatureSetVersion(feature_key="phase3_ml_features", version=1,
         description="Test declared features", definition=definition,
         source_snapshot_id=snapshot.id, definition_sha256=configuration_sha256(definition),
         created_by=user.id)
-    db_session.add(feature_set); db_session.commit()
+    db_session.add(feature_set)
+    db_session.commit()
     idx = np.arange(180, dtype=float)
     close = 100 + 0.08 * idx + np.sin(idx / 6)
     raw = pd.DataFrame({"date": pd.bdate_range("2022-01-03", periods=180),
@@ -160,12 +162,14 @@ def test_ml_api_rejects_feature_set_from_a_different_snapshot(client, db_session
         start_date=date(2022, 1, 3), end_date=date(2022, 9, 9), status="READY",
         file_path="/tmp/not-read.parquet", storage_format="parquet", sha256=hashlib.sha256(symbol.encode()).hexdigest(),
         row_count=180, manifest={}, created_by=user.id) for symbol in ["MSFT", "SPY"]]
-    db_session.add_all(snapshots); db_session.flush()
+    db_session.add_all(snapshots)
+    db_session.flush()
     definition = {"features": ["return_1d"], "target": "next_day_return"}
     feature_set = FeatureSetVersion(feature_key="lineage", version=1, description="Lineage check",
         definition=definition, source_snapshot_id=snapshots[1].id,
         definition_sha256=configuration_sha256(definition), created_by=user.id)
-    db_session.add(feature_set); db_session.commit()
+    db_session.add(feature_set)
+    db_session.commit()
     token = client.post("/api/v1/auth/login", data={
         "username": email, "password": "A-strong-password-2026",
     }).json()["access_token"]
@@ -239,7 +243,8 @@ def test_ml_evaluation_can_be_queued_with_owner_idempotency(client, db_session, 
     user = db_session.scalar(select(User).where(User.email == email))
     role = db_session.scalar(select(Role).where(Role.key == "QUANT_RESEARCHER"))
     assert user is not None and role is not None
-    user.roles.append(role); db_session.commit()
+    user.roles.append(role)
+    db_session.commit()
     token = client.post("/api/v1/auth/login", data={"username": email,
         "password": "A-strong-password-2026"}).json()["access_token"]
     dispatched = []

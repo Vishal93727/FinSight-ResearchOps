@@ -6,7 +6,12 @@ available through lazy attribute access for backwards compatibility.
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .base import Base
+
+if TYPE_CHECKING:
+    from .session import SessionLocal, engine, get_db
 
 __all__ = ["Base", "SessionLocal", "engine", "get_db"]
 

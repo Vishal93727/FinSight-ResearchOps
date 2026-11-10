@@ -136,38 +136,55 @@ def train_lstm_evaluation(frame: pd.DataFrame, feature_columns: list[str], targe
         raise ValueError("Required date, feature or target columns are missing")
     data = frame.loc[:, feature_columns + [target_column, date_column]].copy()
     data[date_column] = pd.to_datetime(data[date_column], errors="coerce")
-    for col in feature_columns + [target_column]: data[col] = pd.to_numeric(data[col], errors="coerce")
+    for col in feature_columns + [target_column]:
+        data[col] = pd.to_numeric(data[col], errors="coerce")
     data = data.replace([np.inf, -np.inf], np.nan).dropna().sort_values(date_column, kind="stable")
-    if len(data) < 100: raise ValueError("At least 100 valid rows are required for LSTM evaluation")
-    if len(data) > 20_000: raise ValueError("LSTM evaluation is bounded to 20,000 rows per synchronous request")
+    if len(data) < 100:
+        raise ValueError("At least 100 valid rows are required for LSTM evaluation")
+    if len(data) > 20_000:
+        raise ValueError("LSTM evaluation is bounded to 20,000 rows per synchronous request")
     x = data[feature_columns].to_numpy(dtype=np.float32)
     y = data[target_column].to_numpy(dtype=np.float32)
     split_row = int(len(data) * (1.0 - test_fraction))
     # Fit scaling only on the training portion.
-    mean = x[:split_row].mean(axis=0); std = x[:split_row].std(axis=0); std[std < 1e-8] = 1.0
+    mean = x[:split_row].mean(axis=0)
+    std = x[:split_row].std(axis=0)
+    std[std < 1e-8] = 1.0
     x = (x - mean) / std
     seq_x, seq_y, seq_dates = [], [], []
     for i in range(sequence_length, len(data)):
-        seq_x.append(x[i-sequence_length:i]); seq_y.append(y[i]); seq_dates.append(i)
+        seq_x.append(x[i-sequence_length:i])
+        seq_y.append(y[i])
+        seq_dates.append(i)
     sx, sy, sidx = np.asarray(seq_x), np.asarray(seq_y), np.asarray(seq_dates)
-    train_mask = sidx < split_row; test_mask = ~train_mask
-    if train_mask.sum() < 50 or test_mask.sum() < 10: raise ValueError("Insufficient train/test sequences")
-    torch.manual_seed(random_seed); torch.use_deterministic_algorithms(True, warn_only=True)
+    train_mask = sidx < split_row
+    test_mask = ~train_mask
+    if train_mask.sum() < 50 or test_mask.sum() < 10:
+        raise ValueError("Insufficient train/test sequences")
+    torch.manual_seed(random_seed)
+    torch.use_deterministic_algorithms(True, warn_only=True)
     class _LSTM(nn.Module):
         def __init__(self, feature_count: int):
-            super().__init__(); self.lstm = nn.LSTM(feature_count, 24, batch_first=True)
+            super().__init__()
+            self.lstm = nn.LSTM(feature_count, 24, batch_first=True)
             self.head = nn.Linear(24, 1)
         def forward(self, values):
-            out, _ = self.lstm(values); return self.head(out[:, -1, :]).squeeze(-1)
+            out, _ = self.lstm(values)
+            return self.head(out[:, -1, :]).squeeze(-1)
     model = _LSTM(len(feature_columns))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.003)
     loss_fn = nn.MSELoss()
-    tx = torch.tensor(sx[train_mask]); ty = torch.tensor(sy[train_mask])
+    tx = torch.tensor(sx[train_mask])
+    ty = torch.tensor(sy[train_mask])
     model.train()
     for _ in range(epochs):
-        optimizer.zero_grad(); loss = loss_fn(model(tx), ty); loss.backward(); optimizer.step()
+        optimizer.zero_grad()
+        loss = loss_fn(model(tx), ty)
+        loss.backward()
+        optimizer.step()
     model.eval()
-    with torch.no_grad(): predictions = model(torch.tensor(sx[test_mask])).numpy()
+    with torch.no_grad():
+        predictions = model(torch.tensor(sx[test_mask])).numpy()
     actual = sy[test_mask]
     mse = float(np.mean((actual - predictions) ** 2))
     from sklearn.metrics import r2_score

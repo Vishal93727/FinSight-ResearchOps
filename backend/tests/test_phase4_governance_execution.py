@@ -3,8 +3,8 @@ from decimal import Decimal
 from sqlalchemy import select
 
 from app.models.entities import Role, User
-from finsight.execution.models import PaperAccount, PaperFill, PaperLedgerEntry, PaperOrder, PaperPosition
-from finsight.governance.models import ModelVersion, ModelRiskReview, ModelGovernanceDecision
+from finsight.execution.models import PaperAccount, PaperFill, PaperLedgerEntry, PaperPosition
+from finsight.governance.models import ModelVersion, ModelRiskReview
 from finsight.market_data.models import Instrument
 from finsight.risk.governance import evaluate_model_candidate, evaluate_paper_order
 
@@ -58,7 +58,8 @@ def _seed_promoted_model(db_session, creator: User, key: str = "ridge-msft", ver
         "test_rows": 100, "directional_accuracy": 0.55, "rmse": 0.02,
         "artifact_integrity": "VERIFIED"}, configuration={"split_method": "chronological_no_shuffle"},
         risk_decision="PASS", state="CANDIDATE", created_by=creator.id)
-    db_session.add(item); db_session.flush()
+    db_session.add(item)
+    db_session.flush()
     db_session.add(ModelRiskReview(model_version_id=item.id, decision="PASS", policy_version="model-governance-v1",
         limits={}, observed_metrics=item.metrics, breaches=[], warnings=[], deterministic=True))
     db_session.commit()
@@ -112,10 +113,14 @@ def test_paper_broker_idempotency_kill_switch_and_reconciliation(client, db_sess
     portfolio_email = "phase4.paper.portfolio@example.com"
     reviewer_email = "phase4.paper.reviewer@example.com"
     admin_email = "phase4.paper.admin@example.com"
-    _register(client, creator_email); _add_role(db_session, creator_email, "QUANT_RESEARCHER")
-    portfolio_token = _register(client, portfolio_email); _add_role(db_session, portfolio_email, "PORTFOLIO_ANALYST")
-    reviewer_token = _register(client, reviewer_email); _add_role(db_session, reviewer_email, "RISK_REVIEWER")
-    admin_token = _register(client, admin_email); _add_role(db_session, admin_email, "ADMIN")
+    _register(client, creator_email)
+    _add_role(db_session, creator_email, "QUANT_RESEARCHER")
+    portfolio_token = _register(client, portfolio_email)
+    _add_role(db_session, portfolio_email, "PORTFOLIO_ANALYST")
+    reviewer_token = _register(client, reviewer_email)
+    _add_role(db_session, reviewer_email, "RISK_REVIEWER")
+    admin_token = _register(client, admin_email)
+    _add_role(db_session, admin_email, "ADMIN")
     portfolio_token = client.post("/api/v1/auth/login", data={"username": portfolio_email, "password": "Strong-password-2026!"}).json()["access_token"]
     reviewer_token = client.post("/api/v1/auth/login", data={"username": reviewer_email, "password": "Strong-password-2026!"}).json()["access_token"]
     admin_token = client.post("/api/v1/auth/login", data={"username": admin_email, "password": "Strong-password-2026!"}).json()["access_token"]
@@ -185,19 +190,22 @@ def test_rl_queue_is_idempotent_and_retryable(client, db_session, monkeypatch) -
     from finsight.infrastructure.database.models import JobRecord
 
     email = "phase4.rl.quant@example.com"
-    token = _register(client, email); _add_role(db_session, email, "QUANT_RESEARCHER")
+    token = _register(client, email)
+    _add_role(db_session, email, "QUANT_RESEARCHER")
     token = client.post("/api/v1/auth/login", data={"username": email, "password": "Strong-password-2026!"}).json()["access_token"]
     user = db_session.scalar(select(User).where(User.email == email))
     snapshot = DataSnapshot(provider_key="manual_upload", instrument_symbol="MSFT", interval="1d",
         start_date=date(2022, 1, 1), end_date=date(2025, 1, 1), status="READY",
         file_path="/tmp/not-read-until-worker.parquet", storage_format="parquet", sha256="a" * 64,
         row_count=800, manifest={}, created_by=user.id)
-    db_session.add(snapshot); db_session.flush()
+    db_session.add(snapshot)
+    db_session.flush()
     definition = {"features": ["return_1d"], "target": "next_day_return"}
     feature = FeatureSetVersion(feature_key="rl_test", version=1, description="test",
         definition=definition, source_snapshot_id=snapshot.id,
         definition_sha256=configuration_sha256(definition), created_by=user.id)
-    db_session.add(feature); db_session.commit()
+    db_session.add(feature)
+    db_session.commit()
     headers = {"Authorization": f"Bearer {token}"}
     payload = {"idempotency_key": "phase4-rl-job-0001", "dataset_snapshot_id": snapshot.id,
         "feature_set_version_id": feature.id, "algorithm": "PPO", "total_timesteps": 5000}
@@ -238,10 +246,14 @@ def test_paper_reconciliation_repairs_quantity_cash_and_ledger(client, db_sessio
     portfolio_email = "phase4.repair.portfolio@example.com"
     reviewer_email = "phase4.repair.reviewer@example.com"
     admin_email = "phase4.repair.admin@example.com"
-    _register(client, creator_email); _add_role(db_session, creator_email, "QUANT_RESEARCHER")
-    ptoken = _register(client, portfolio_email); _add_role(db_session, portfolio_email, "PORTFOLIO_ANALYST")
-    rtoken = _register(client, reviewer_email); _add_role(db_session, reviewer_email, "RISK_REVIEWER")
-    atoken = _register(client, admin_email); _add_role(db_session, admin_email, "ADMIN")
+    _register(client, creator_email)
+    _add_role(db_session, creator_email, "QUANT_RESEARCHER")
+    ptoken = _register(client, portfolio_email)
+    _add_role(db_session, portfolio_email, "PORTFOLIO_ANALYST")
+    rtoken = _register(client, reviewer_email)
+    _add_role(db_session, reviewer_email, "RISK_REVIEWER")
+    atoken = _register(client, admin_email)
+    _add_role(db_session, admin_email, "ADMIN")
     ptoken = client.post("/api/v1/auth/login", data={"username": portfolio_email, "password": "Strong-password-2026!"}).json()["access_token"]
     rtoken = client.post("/api/v1/auth/login", data={"username": reviewer_email, "password": "Strong-password-2026!"}).json()["access_token"]
     atoken = client.post("/api/v1/auth/login", data={"username": admin_email, "password": "Strong-password-2026!"}).json()["access_token"]
@@ -254,9 +266,10 @@ def test_paper_reconciliation_repairs_quantity_cash_and_ledger(client, db_sessio
     assert client.post(f"/api/v1/governance/models/{model.id}/promote", headers={"Authorization": f"Bearer {atoken}"}).status_code == 200
     ph = {"Authorization": f"Bearer {ptoken}"}
     account = client.post("/api/v1/execution/accounts", headers=ph, json={"name": "Repair ledger", "initial_cash": "10000"}).json()
-    order = client.post(f"/api/v1/execution/accounts/{account['id']}/orders", headers=ph, json={
+    order_response = client.post(f"/api/v1/execution/accounts/{account['id']}/orders", headers=ph, json={
         "client_order_id": "repair-order-0001", "model_version_id": model.id, "symbol": "MSFT",
         "side": "BUY", "quantity": "10", "simulation_reference_price": "100"}).json()
+    assert order_response["status"] == "FILLED"
     position = db_session.scalar(select(PaperPosition).where(PaperPosition.account_id == account["id"]))
     account_row = db_session.get(PaperAccount, account["id"])
     position.quantity = Decimal("9")
