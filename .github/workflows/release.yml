@@ -14,14 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: api-meta
         with:
           images: ghcr.io/${{ github.repository }}-api
           tags: |
             type=ref,event=tag
             type=sha
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: web-meta
         with:
           images: ghcr.io/${{ github.repository }}-web
