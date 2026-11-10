@@ -182,6 +182,7 @@ def test_ml_api_rejects_feature_set_from_a_different_snapshot(client, db_session
 
 
 def test_finbert_adapter_returns_model_probabilities_without_loading_external_weights() -> None:
+    pytest.importorskip("torch")
     import torch
     from types import SimpleNamespace
     from finsight.models.sentiment import score_finbert_sentiment
